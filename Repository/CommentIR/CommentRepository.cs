@@ -6,6 +6,7 @@ using api.Data;
 using Microsoft.EntityFrameworkCore;
 using api.Models;
 using api.Dtos.Comment;
+using api.Helpers.Filter;
 
 namespace api.Repository.CommentIR
 {
@@ -16,9 +17,20 @@ namespace api.Repository.CommentIR
         {
             _context = context;
         }
-        public async Task<List<Comment>> GetAllAsync()
+        public async Task<List<Comment>> GetAllAsync(CommentQuery query)
         {
-            return await _context.Comments.ToListAsync();
+            var results = _context.Comments.AsQueryable();
+            
+            if(!string.IsNullOrWhiteSpace(query.Title))
+            {
+                results = results.Where(c => c.Title.Contains(query.Title));
+
+            }
+            if(!string.IsNullOrWhiteSpace(query.Content))
+            {
+                results = results.Where( c => c.Content.Contains(query.Content));
+            }
+            return await results.ToListAsync();
         }
 
         public async Task<Comment?> GetByIdAsync(int id)

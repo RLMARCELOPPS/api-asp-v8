@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using api.Dtos.Comment;
+using api.Helpers.Filter;
 using api.Mappers;
 using api.Models;
 using api.Repository.CommentIR;
@@ -27,9 +28,13 @@ namespace api.Controllers
 
         [HttpGet]
 
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] CommentQuery query)
         {
-            var data = await _commentRepo.GetAllAsync();
+            //No Need for get
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var data = await _commentRepo.GetAllAsync(query);
             var results = data.Select( s => s.ToCommentDto());
             return Ok(results);
         }
@@ -38,6 +43,11 @@ namespace api.Controllers
 
         public async Task<IActionResult> GetById([FromRoute] int id)
         {
+
+            //No Need for get
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var result = await _commentRepo.GetByIdAsync(id);
             if(result == null)
             {
@@ -50,12 +60,16 @@ namespace api.Controllers
 
         public async Task<IActionResult> Store([FromRoute] int stockId, [FromBody] StoreCommentRequest request)
         {
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
            if(!await _stockRepo.StockExists(stockId))
            {
             return BadRequest("Stock does not exist");
            }
 
             var model =  request.ToCommentFromStore(stockId); //Validation
+            
             await _commentRepo.StoreAsync(model);
 
             return CreatedAtAction(nameof(GetById), new { id = model.Id}, model.ToCommentDto());
@@ -69,6 +83,9 @@ namespace api.Controllers
             // var result = await _commentRepo.UpdatewithMapperAsync(id, request.ToCommentFromUpdate());
 
             //kung gusto mo direct sa request and save na agad ito gamitin
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var result = await _commentRepo.UpdateAsync(id, request);
 
             if(result == null)
@@ -84,6 +101,9 @@ namespace api.Controllers
         
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
+            if(!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var result = await _commentRepo.DeleteAsync(id);
 
             if(result == null)
